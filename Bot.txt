@@ -1,0 +1,69 @@
+public class Main {
+
+    public void sendMail(String from, String to, String subject, String body) {
+
+        Properties props = new Properties();
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.host", "smtp.gmail.com");
+        props.put("mail.smtp.port", "587");
+
+        Session session = Session.getInstance(props,
+                new javax.mail.Authenticator() {
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(
+                                "rubhanprakash21@gmail.com", "aezakmi3uzumymw12"
+                        );
+                    }
+                });
+
+        try {
+
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(from));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+            message.setSubject(subject);
+            message.setText(body);
+
+            Transport.send(message);
+            System.out.println("Sent confirmation mail to the Course Instructor");
+
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
+        }
+
+
+    }
+
+    public static void main(String args[]) {
+        AmazonLexRuntime client=AmazonLexRuntimeClientBuilder.standard()
+                .withRegion(Regions.US_EAST_1).build();
+        PostTextRequest textRequest=new PostTextRequest();
+        textRequest.setBotName("temp");
+        //textRequest.setBotAlias("testbotforrequest");
+        textRequest.setBotAlias("test");
+        textRequest.setUserId("testuser");
+        Scanner scanner =new Scanner(System.in);
+
+        String messageFromBot = "";
+        while(true) {
+            String requestText = scanner.nextLine().trim();
+            if (requestText.isEmpty())
+                break;
+
+            textRequest.setInputText(requestText);
+            PostTextResult textResult = client.postText(textRequest);
+            if (textResult.getDialogState().startsWith("Elicit"))
+                System.out.println(textResult.getMessage());
+            else if (textResult.getDialogState().equals("readyForFullfillment"))
+                System.out.println(String.format("%s: %s", textResult.getIntentName(), textResult.getSlots()));
+            else {
+                messageFromBot = textResult.getMessage();
+                System.out.println(messageFromBot);
+
+            }
+        }
+
+        sendMail(,,"Course Registration Alert!!",messageFromBot);
+    }
+}
